@@ -6,8 +6,7 @@ import { motion } from "framer-motion";
 
 export default function LifeHUD() {
   const [input, setInput] = useState("");
-  // --- 修复点：添加 <any[]> 类型定义 ---
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]); // 之前修好的数组类型
   const [status, setStatus] = useState("IDLE");
   const [battery, setBattery] = useState(100);
 
@@ -19,7 +18,8 @@ export default function LifeHUD() {
     ]);
   }, []);
 
-  const handleSubmit = async (e) => {
+  // --- 关键修复点：给 e 加上 React.FormEvent 类型 ---
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
