@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 
 export default function LifeHUD() {
   const [input, setInput] = useState("");
-  const [logs, setLogs] = useState([]);
+  // --- 修复点：添加 <any[]> 类型定义 ---
+  const [logs, setLogs] = useState<any[]>([]);
   const [status, setStatus] = useState("IDLE");
   const [battery, setBattery] = useState(100);
 
@@ -28,7 +29,7 @@ export default function LifeHUD() {
     setStatus("PROCESSING");
 
     try {
-      // --- 关键修改：指向云端 Render 地址 ---
+      // 指向 Render 云端
       const res = await fetch("https://sara-backend-gxr7.onrender.com/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
