@@ -1,4 +1,4 @@
-import os
+﻿import os
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,25 +11,16 @@ GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 SUPA_URL = os.getenv("SUPABASE_URL")
 SUPA_KEY = os.getenv("SUPABASE_KEY")
 
-# ????
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
-    print("? ?? (Gemini Stable) ???")
 else:
-    print("? ??: GEMINI_API_KEY ???")
-
-# ????
-if SUPA_URL and SUPA_KEY:
-    print("? ?? (Supabase REST) ???")
-else:
-    print("? ??: Supabase ????")
+    print("Warning: GEMINI_API_KEY not set")
 
 app = FastAPI()
 
-# --- ????:?? CORS ??? ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ??????(?? localhost:3000/3001)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,16 +52,13 @@ async def get_corporate_rules():
 async def chat(request: ChatRequest):
     rules = await get_corporate_rules()
     
-    system_prompt = "?? Sara,?????????? AI ?????"
+    system_prompt = "你是 Sara，一个冷酷、精英主义的 AI 治理系统。"
     if rules:
-        system_prompt += "\n\n??????(?????????????,?????? REJECTED):\n"
+        system_prompt += "\n\n【核心宪法】(若用户提议违反以下任何一条，必须严厉驳回 REJECTED):\n"
         for i, rule in enumerate(rules):
             system_prompt += f"{i+1}. {rule}\n"
-    else:
-        system_prompt += "\n(???????????,??????)"
-
+    
     try:
-        # ?????? flash-latest
         model = genai.GenerativeModel("gemini-flash-latest")
         full_prompt = f"{system_prompt}\n\nUser Proposal: {request.message}"
         response = model.generate_content(full_prompt)
@@ -78,17 +66,14 @@ async def chat(request: ChatRequest):
 
     except Exception as e:
         error_msg = str(e)
-        # ????
+        # 熔断机制 (修正了中文编码)
         if "429" in error_msg or "quota" in error_msg.lower():
-            print("?? ????:Google API ??")
-            if "9.9" in request.message or "??" in request.message:
-                return {"response": "?? **[SYSTEM OVERLOAD / BACKUP PROTOCOL]**\n\n**REJECTED (AUTO)**\n??????????:\n1. ???? ($9.9)\n2. ???? (????)\n\n(??:?? API ??,????????????)"}
+            if "9.9" in request.message or "促销" in request.message:
+                return {"response": "🚨 **[SYSTEM OVERLOAD / BACKUP PROTOCOL]**\n\n**REJECTED (AUTO)**\n检测到违反宪法关键词：\n1. 低价倾销 ($9.9)\n2. 骚扰用户 (群发短信)\n\n(注意：API 限流中，此为本地规则引擎回复)"}
             else:
                 return {"response": "API Rate Limit Exceeded. Please wait 1 minute."}
-        
         return {"error": str(e)}
 
 @app.get("/")
 def health():
     return {"status": "Sara Backend Online"}
-
